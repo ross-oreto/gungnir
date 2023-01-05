@@ -96,7 +96,7 @@ router.get(uri()
 ### Content Negotiation
 ```
 Negotiate.create()
-        .html(ctx -> ctx.render("index.html", model))
+        .html(ctx -> ctx.render("index.jte", model))
         .json(ctx -> ctx.json(model))
         .otherwise(ctx -> fail(HttpStatus.UNSUPPORTED_MEDIA_TYPE));
 ```

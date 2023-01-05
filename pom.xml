@@ -62,6 +62,7 @@
             <groupId>gg.jte</groupId>
             <artifactId>jte</artifactId>
             <version>2.2.4</version>
+            <scope>test</scope>
         </dependency>
         <!-- JSON -->
         <dependency>

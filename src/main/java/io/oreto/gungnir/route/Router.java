@@ -14,6 +14,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+/**
+ * Interface to separate the routing relating methods away from the rest of the Gungnir/Javalin methods.
+ */
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface Router {
     /**

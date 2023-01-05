@@ -6,6 +6,9 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Provide application authentication
+ */
 public interface Authenticator {
     /**
      * Generate a unique token

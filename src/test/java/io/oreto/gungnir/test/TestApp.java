@@ -7,7 +7,6 @@ import io.javalin.json.JsonMapper;
 import io.oreto.gungnir.app.AppService;
 import io.oreto.gungnir.app.Gungnir;
 import io.oreto.gungnir.app.ServiceRegistrar;
-import io.oreto.gungnir.info.InfoService;
 import io.oreto.gungnir.render.ViewRenderer;
 import io.oreto.gungnir.security.Authenticator;
 import io.oreto.gungnir.security.LoginService;
@@ -38,7 +37,6 @@ public class TestApp extends Gungnir {
     @Override
     protected void registerServices(ServiceRegistrar registrar) {
         registrar
-                .register(new InfoService())
                 .register(new AppService())
                 .register(new DataService(new DataRepo()))
                 .register(new LoginService(ctx -> Optional.of(

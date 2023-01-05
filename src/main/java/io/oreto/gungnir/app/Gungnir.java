@@ -1,20 +1,20 @@
 package io.oreto.gungnir.app;
 
 import com.typesafe.config.Config;
+import io.javalin.Javalin;
 import io.javalin.apibuilder.EndpointGroup;
+import io.javalin.config.JavalinConfig;
+import io.javalin.http.Handler;
 import io.javalin.http.HandlerType;
+import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.sse.SseClient;
 import io.javalin.http.sse.SseHandler;
 import io.javalin.json.JsonMapper;
 import io.javalin.rendering.JavalinRenderer;
-import io.javalin.websocket.WsConfig;
-import io.javalin.Javalin;
-import io.javalin.config.JavalinConfig;
-import io.javalin.http.Handler;
-import io.javalin.http.HttpStatus;
 import io.javalin.security.AccessManager;
 import io.javalin.security.RouteRole;
+import io.javalin.websocket.WsConfig;
 import io.oreto.gungnir.error.ErrorHandling;
 import io.oreto.gungnir.error.ErrorResponse;
 import io.oreto.gungnir.render.ViewRenderer;
@@ -34,6 +34,7 @@ import java.io.File;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static io.oreto.gungnir.app.Configurable.loadConfig;
 import static io.oreto.gungnir.app.IEnvironment.loadProfiles;
@@ -43,6 +44,7 @@ import static io.oreto.gungnir.app.IEnvironment.loadProfiles;
  */
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class Gungnir extends Javalin implements IEnvironment, Configurable, ContextUser, Router {
+    private static final Collection<RouteInfo> NO_ROUTES = List.of();
 
     public static Gungnir create(Config config) {
         return new Gungnir(config);
@@ -69,13 +71,13 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
     private final Config config;
     protected final Logger log;
 
-    private final List<RouteInfo> routeList;
+    private final Map<String, Collection<RouteInfo>> routeMap;
 
     protected Gungnir(Config config) {
         this.profiles = loadProfiles();
         this.config = config;
         this.log = LoggerFactory.getLogger(Gungnir.class);
-        this.routeList = new ArrayList<>();
+        this.routeMap = new LinkedHashMap<>();
 
         // log config files loaded
         for (String origin : Arrays.stream(config.origin().description()
@@ -133,7 +135,10 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
                 event.serverStopping(() -> { log.info("stopping server"); onStopping(); });
                 event.serverStopped(() -> { log.info("server stopped"); onStopped(); });
                 // store routes
-                event.handlerAdded(info -> routeList.add(RouteInfo.of(info)));
+                event.handlerAdded(info -> {
+                    RouteInfo routeInfo = RouteInfo.of(info);
+                    routeMap.computeIfAbsent(routeInfo.getGroup(), s -> new ArrayList<>()).add(routeInfo);
+                });
             });
 
             // configure CORS
@@ -283,8 +288,16 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
      * Get the application routes
      * @return List of app routes
      */
-    public List<RouteInfo> getRoutes() {
-        return routeList;
+    public Collection<RouteInfo> getRoutes() {
+        return routeMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    /**
+     * Get the application routes for a particular group
+     * @return List of grouped app routes
+     */
+    public Collection<RouteInfo> getRoutes(String group) {
+        return routeMap.getOrDefault(group, NO_ROUTES);
     }
 
     /**
@@ -296,12 +309,13 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
     }
 
     /**
-     * Register the service instance with the server
-     * @param service The service to register
+     * Register each service instance with the server
+     * @param services The services to register
      * @return this gungnir instance
      */
-    public Gungnir register(Service service) {
-        service.setGungnir(this);
+    public Gungnir register(Service... services) {
+        for (Service service : services)
+            service.setGungnir(this);
         return this;
     }
 

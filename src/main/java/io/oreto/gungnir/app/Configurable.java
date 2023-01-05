@@ -5,10 +5,13 @@ import com.typesafe.config.ConfigFactory;
 
 import java.util.Objects;
 
+/**
+ * Support loading a series of properties for an implementing class
+ */
 public interface Configurable {
 
     /**
-     * Load the config files in this order of priority: (give gungnir.profiles = ['dev'])
+     * Load the config files in this order of priority: (given gungnir.profiles = ['dev'])
      * 1. System properties
      * 2. application-dev.conf (would just be application.conf when profiles are empty)
      * 3. reference.conf

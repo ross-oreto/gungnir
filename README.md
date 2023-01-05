@@ -33,7 +33,6 @@ new DemoApp().start();
     @Override
     protected void registerServices(ServiceRegistrar registrar) {
         registrar
-                .register(new InfoService())
                 .register(new AppService());
     }
    

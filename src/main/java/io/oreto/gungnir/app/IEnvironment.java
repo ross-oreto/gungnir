@@ -1,5 +1,8 @@
 package io.oreto.gungnir.app;
 
+/**
+ * Supports determining what environment(s) are running
+ */
 public interface IEnvironment {
     /**
      * Determine the environment profiles to load

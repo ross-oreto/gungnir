@@ -10,10 +10,16 @@ import io.oreto.gungnir.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 
+/**
+ * Encapsulates a set of {@link Router routing} rules and related logic.
+ * <p>
+ * Instance can be assigned to the {@link Router routing} using
+ * {@link io.oreto.gungnir.app.Gungnir#register(Service...)} method.
+ */
 public abstract class Service implements IEnvironment, Configurable, ContextUser, ContextFail {
     Gungnir gungnir;
     private final String name;
@@ -30,6 +36,11 @@ public abstract class Service implements IEnvironment, Configurable, ContextUser
         routing(gungnir);
     }
 
+    /**
+     * Represents what should be a unique name/id of this service
+     * defaults to fully qualified class name
+     * @return The service name/id
+     */
     public String name() {
         return name;
     }
@@ -40,8 +51,12 @@ public abstract class Service implements IEnvironment, Configurable, ContextUser
      */
     public abstract void routing(Router router);
 
-    protected List<RouteInfo> getRoutes() {
-        return gungnir.getRoutes();
+    /**
+     * Return all the routes registered by this service
+     * @return A list of routes
+     */
+    protected Collection<RouteInfo> getRoutes() {
+        return gungnir.getRoutes(name());
     }
 
     /**
@@ -56,6 +71,11 @@ public abstract class Service implements IEnvironment, Configurable, ContextUser
         return uri.startsWith("/") ? uri : String.format("/%s", uri);
     }
 
+    /**
+     * Get config keys equal to the name of this service, defaults to fully qualified class name
+     * If a separate config file exists with the name, it will be used also.
+     * @return The service specific config
+     */
     @Override
     public final Config conf() {
         String name = name();
@@ -65,11 +85,20 @@ public abstract class Service implements IEnvironment, Configurable, ContextUser
                 .resolve();
     }
 
+    /**
+     * Get the active profiles for the environment
+     * @return All the active profiles
+     */
     @Override
     public final String[] getProfiles() {
         return gungnir.getProfiles();
     }
 
+    /**
+     * lookup user by some token
+     * @param token Some user issued token
+     * @return A user if token is found, empty otherwise
+     */
     @Override
     public final Optional<User> lookupToken(String token) {
         return gungnir.lookupToken(token);

@@ -1,6 +1,5 @@
 package io.oreto.gungnir.security;
 
-import com.typesafe.config.Config;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.oreto.gungnir.app.Service;

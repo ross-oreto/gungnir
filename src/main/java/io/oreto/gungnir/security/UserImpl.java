@@ -5,6 +5,10 @@ import io.javalin.security.RouteRole;
 import java.io.Serial;
 import java.util.*;
 
+/**
+ * Implementation of a User for as a result of authentication with roles for authorization.
+ * A user has a subject, set of roles, and attributes
+ */
 public class UserImpl implements User {
     @Serial
     private static final long serialVersionUID = 1931L;

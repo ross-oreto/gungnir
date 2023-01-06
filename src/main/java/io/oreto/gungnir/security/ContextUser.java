@@ -58,10 +58,28 @@ public interface ContextUser {
     /**
      * check user roles
      * @param ctx Provides access to functions for handling the request and response
+     * @return true if user has all the specified roles, false otherwise
+     */
+    default boolean hasRoles(Context ctx, Roles roles) {
+        return getUser(ctx).hasRoles(roles);
+    }
+
+    /**
+     * check user roles
+     * @param ctx Provides access to functions for handling the request and response
      * @return true if user has any of the specified roles, false otherwise
      */
     default boolean hasAnyRole(Context ctx, RouteRole... routeRoles) {
         return getUser(ctx).hasAnyRole(routeRoles);
+    }
+
+    /**
+     * check user roles
+     * @param ctx Provides access to functions for handling the request and response
+     * @return true if user has any of the specified roles, false otherwise
+     */
+    default boolean hasAnyRole(Context ctx, Roles roles) {
+        return getUser(ctx).hasAnyRole(roles);
     }
 
 

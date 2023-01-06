@@ -3,9 +3,16 @@ package io.oreto.gungnir.security;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a set of user roles
+ */
 public class Roles {
     private static final Set<Role> NO_ROLES = Set.of();
 
+    /**
+     * Returns empty set of roles
+     * @return A set of roles with size 0
+     */
     public static Roles empty() {
         return new Roles(NO_ROLES);
     }
@@ -28,6 +35,10 @@ public class Roles {
         this.roles = roles;
     }
 
+    /**
+     * Return the role set as a Role[]
+     * @return An array of roles
+     */
     public Role[] array() {
         return roles.toArray(Role[]::new);
     }

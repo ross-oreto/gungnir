@@ -6,6 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * Provides an abstraction for a user role which can implements a character sequence, being the name
+ * , and can be serialized
+ */
 public abstract class RoleSequence implements RouteRole, Serializable, CharSequence {
     private final String name;
 

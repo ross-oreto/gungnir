@@ -7,6 +7,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Info for a particular route
+ *  group: which name/class/service class the route belongs to
+ * method: The http method to access the route
+ *   path: The uri of the route
+ *  roles: Roles needed to the access route if any
+ */
 public class RouteInfo {
     public static RouteInfo of(HandlerMetaInfo metaInfo) {
         return new RouteInfo(metaInfo);

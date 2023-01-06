@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a user authentication with a subject, set of roles, and attributes
+ */
 public interface User extends Serializable {
     String username = "username";
     String firstName = "firstName";
@@ -78,6 +81,15 @@ public interface User extends Serializable {
      * @param roles The roles to test
      * @return true if user has all the specified roles, false otherwise
      */
+    default boolean hasRoles(Roles roles) {
+        return getRoles().containsAll(roles.getRoles());
+    }
+
+    /**
+     * Determine if user has all the specified roles
+     * @param roles The roles to test
+     * @return true if user has all the specified roles, false otherwise
+     */
     default boolean hasRoles(Set<RouteRole> roles) {
         return getRoles().containsAll(roles);
     }
@@ -106,6 +118,15 @@ public interface User extends Serializable {
             if (userRoles.contains(role))
                 return true;
         return false;
+    }
+
+    /**
+     * Determine if user has any of the specified roles
+     * @param roles The roles to test
+     * @return true if user has any of the specified roles, false otherwise
+     */
+    default boolean hasAnyRole(Roles roles) {
+        return hasAnyRole(roles.array());
     }
 
     /**

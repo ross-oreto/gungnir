@@ -4,9 +4,13 @@ import io.javalin.http.*;
 import io.javalin.security.RouteRole;
 import io.oreto.gungnir.error.ContextFail;
 import io.oreto.gungnir.security.ContextUser;
+import io.oreto.gungnir.security.Roles;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -192,7 +196,7 @@ public final class ContextPredicate implements ContextUser, ContextFail {
     }
 
     /**
-     *  Accept requests only when the user has all the specified roles
+     * Accept requests only when the user has all the specified roles
      * @return composed predicate representing the logical expression between
      * this predicate <b>AND</b> the role predicate
      */
@@ -201,12 +205,30 @@ public final class ContextPredicate implements ContextUser, ContextFail {
     }
 
     /**
-     *  Accept requests only when the user has any of the specified roles
+     * Accept requests only when the user has all the specified roles
+     * @return composed predicate representing the logical expression between
+     * this predicate <b>AND</b> the role predicate
+     */
+    public ContextPredicate hasRoles(Roles roles) {
+        return and(ctx -> hasRoles(ctx, roles));
+    }
+
+    /**
+     * Accept requests only when the user has any of the specified roles
      * @return composed predicate representing the logical expression between
      * this predicate <b>AND</b> the role predicate
      */
     public ContextPredicate hasAnyRole(RouteRole... routeRoles) {
         return and(ctx -> hasAnyRole(ctx, routeRoles));
+    }
+
+    /**
+     * Accept requests only when the user has any of the specified roles
+     * @return composed predicate representing the logical expression between
+     * this predicate <b>AND</b> the role predicate
+     */
+    public ContextPredicate hasAnyRole(Roles roles) {
+        return and(ctx -> hasAnyRole(ctx, roles));
     }
 
     /**

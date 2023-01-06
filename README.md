@@ -13,7 +13,7 @@ In Norse mythology, Gungnir is the spear of the god Odin.
   - Lightbend config supports most major properties format. .properties, .json, .conf. 
   - yaml is left out, however yaml is not as prominent as the other formats and the most recent yaml versions have security vulnerabilities which seems like a double wammy considering the format isn't as powerful as hocon. 
   - Lightbend config is a small library with zero dependencies. This is hugely attractive considering what the library can accomplish.
-- easy CORS configuration using config properties
+- easy CORS, static files, and SPA configuration using config properties
 
 ### Create a new app
 ``` 

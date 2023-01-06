@@ -4,6 +4,8 @@ import com.typesafe.config.Config;
 import io.javalin.Javalin;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.config.JavalinConfig;
+import io.javalin.config.SpaRootConfig;
+import io.javalin.config.StaticFilesConfig;
 import io.javalin.http.Handler;
 import io.javalin.http.HandlerType;
 import io.javalin.http.HttpStatus;
@@ -163,32 +165,32 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
         if (Objects.nonNull(viewRenderer))
             JavalinRenderer.register(viewRenderer.getRenderer(), viewRenderer.extensions());
 
-        configureStaticFiles(javalinConfig);
-        configureSpa(javalinConfig);
+        configureStaticFiles(javalinConfig.staticFiles);
+        configureSpa(javalinConfig.spaRoot);
         configureCors(javalinConfig);
     }
 
     /**
      * Define configuration for static file handler
-     * @param javalinConfig configuration object for Javalin
+     * @param staticFilesConfig configuration object for Javalin
      */
-    protected void configureStaticFiles(JavalinConfig javalinConfig) {
-        Config staticFilesConfig = config.getConfig("staticFiles");
-        if (staticFilesConfig.getBoolean("enabled")) {
-            if (staticFilesConfig.getBoolean("enableWebjars")) {
-                javalinConfig.staticFiles.enableWebjars();
+    protected void configureStaticFiles(StaticFilesConfig staticFilesConfig) {
+        Config staticConfig = config.getConfig("staticFiles");
+        if (staticConfig.getBoolean("enabled")) {
+            if (staticConfig.getBoolean("enableWebjars")) {
+                staticFilesConfig.enableWebjars();
             }
-            javalinConfig.staticFiles.add(staticFiles -> {
-                staticFiles.hostedPath = staticFilesConfig.getString("hosted");
-                staticFiles.directory = staticFilesConfig.getString("directory");
-                staticFiles.location = staticFilesConfig.getString("location") .equals("classpath")
+            staticFilesConfig.add(staticFiles -> {
+                staticFiles.hostedPath = staticConfig.getString("hosted");
+                staticFiles.directory = staticConfig.getString("directory");
+                staticFiles.location = staticConfig.getString("location") .equals("classpath")
                         ? Location.CLASSPATH
                         : Location.EXTERNAL;
-                staticFiles.precompress = staticFilesConfig.getBoolean("precompress");
-                Config headers = staticFilesConfig.getConfig("headers");
+                staticFiles.precompress = staticConfig.getBoolean("precompress");
+                Config headers = staticConfig.getConfig("headers");
                 staticFiles.headers = headers.root().keySet().stream()
                         .collect(Collectors.toMap(it -> it, headers::getString));
-                Set<String> skipFiles = new HashSet<>(staticFilesConfig.getStringList("skipFiles"));
+                Set<String> skipFiles = new HashSet<>(staticConfig.getStringList("skipFiles"));
                 if (!skipFiles.isEmpty()) {
                     staticFiles.skipFileFunction = req -> {
                         String uri = req.getRequestURI();
@@ -205,13 +207,13 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
 
     /**
      * Define configuration for spa root config
-     * @param javalinConfig configuration object for Javalin
+     * @param spaRootConfig configuration object for Javalin
      */
-    protected void configureSpa(JavalinConfig javalinConfig) {
+    protected void configureSpa(SpaRootConfig spaRootConfig) {
         Config spaConfig = config.getConfig("spa");
         Map<String, String> spaMap = spaConfig.root().keySet().stream()
                 .collect(Collectors.toMap(it -> it, spaConfig::getString));
-        spaMap.forEach(javalinConfig.spaRoot::addFile);
+        spaMap.forEach(spaRootConfig::addFile);
     }
 
     /**
@@ -330,8 +332,12 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
                 gungnir.registerServices(registrar);
             }
             @Override
-            protected void configureStaticFiles(JavalinConfig javalinConfig) {
-                gungnir.configureCors(javalinConfig);
+            protected void configureStaticFiles(StaticFilesConfig staticFilesConfig) {
+                gungnir.configureStaticFiles(staticFilesConfig);
+            }
+            @Override
+            protected void configureSpa(SpaRootConfig spaRootConfig) {
+                gungnir.configureSpa(spaRootConfig);
             }
             @Override
             protected void configureCors(JavalinConfig javalinConfig) {

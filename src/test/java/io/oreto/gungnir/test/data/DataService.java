@@ -1,21 +1,14 @@
 package io.oreto.gungnir.test.data;
 
-import io.javalin.http.*;
-import io.oreto.gungnir.http.ContextPredicate;
+import io.javalin.http.HttpStatus;
 import io.oreto.gungnir.app.Service;
+import io.oreto.gungnir.http.ContextPredicate;
 import io.oreto.gungnir.http.MediaType;
 import io.oreto.gungnir.route.Router;
 
 import java.util.List;
 
 public class DataService extends Service {
-
-    //    public static void main(String[] args) {
-    //        new StageApp()
-    //                .get("/", ctx -> ctx.render("index.jte"), Roles.of("burglar"))
-    //                .get("/test", Negotiate.create().html_fallback_json("test.jte", Map.of("s", "turbo")), Roles.of("burglar"))
-    //                .start();
-    //    }
     private final IRepo dataRepo;
 
     public DataService(IRepo dataRepo) {

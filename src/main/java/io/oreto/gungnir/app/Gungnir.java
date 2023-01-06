@@ -10,6 +10,7 @@ import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 import io.javalin.http.sse.SseClient;
 import io.javalin.http.sse.SseHandler;
+import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JsonMapper;
 import io.javalin.rendering.JavalinRenderer;
 import io.javalin.security.AccessManager;
@@ -32,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -84,49 +84,12 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
                 .replace("merge of", "").split(",")).map(String::trim).toList()) {
             log.info("config loaded: {}", origin);
         }
-
-        Config serverConfig = config.getConfig("server");
         JavalinConfig.applyUserConfig(this, this.cfg, javalinConfig -> {
             // basic routing settings
+            Config serverConfig = config.getConfig("server");
+            javalinConfig.routing.contextPath = serverConfig.getString("contextPath");
             javalinConfig.routing.ignoreTrailingSlashes = serverConfig.getBoolean("ignoreTrailingSlashes");
             javalinConfig.routing.treatMultipleSlashesAsSingleSlash = serverConfig.getBoolean("ignoreMultipleSlashes");
-
-            // setup json
-            JsonMapper jsonMapper = jsonMapper();
-            if (Objects.nonNull(jsonMapper))
-                javalinConfig.jsonMapper(jsonMapper);
-
-            // setup session handler
-            SessionHandler sessionHandler = sessionHandler();
-            if (Objects.nonNull(sessionHandler))
-                javalinConfig.jetty.sessionHandler(() -> sessionHandler);
-
-            // setup access manager
-            AccessManager accessManager = accessManager();
-            if (Objects.nonNull(accessManager))
-                javalinConfig.accessManager(accessManager);
-
-            // define error handlers
-            ErrorHandling errorHandling = new ErrorHandling();
-            errorHandling
-                    .add(Exception.class, (e, ctx) -> {
-                        ErrorResponse errorResponse = ErrorResponse.of(e);
-                        log.error("", e);
-                        ctx.status(errorResponse.getStatus()).json(errorResponse);
-                    })
-                    .add(HttpStatus.NOT_FOUND.getCode(), ctx -> {
-                        log.error("{}: {}", ctx.status(), ctx.path());
-                        ctx.status(HttpStatus.NOT_FOUND.getCode())
-                                .json(ErrorResponse.of(new NotFoundResponse()).withDetail("path", ctx.path()));
-                    });
-            errorHandling(errorHandling);
-            errorHandling.getExceptionHandlers().forEach(this::exception);
-            errorHandling.getErrorHandlers().forEach(this::error);
-
-            // register view/template renderer
-            ViewRenderer viewRenderer = viewRenderer();
-            if (Objects.nonNull(viewRenderer))
-                JavalinRenderer.register(viewRenderer.getRenderer(), viewRenderer.extensions());
 
             // define events
             this.events(event -> {
@@ -139,30 +102,15 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
                     RouteInfo routeInfo = RouteInfo.of(info);
                     routeMap.computeIfAbsent(routeInfo.getGroup(), s -> new ArrayList<>()).add(routeInfo);
                 });
-            });
-
-            // configure CORS
-            Config corsConf = config.getConfig("cors");
-            if (corsConf.getBoolean("enabled")) {
-                List<String> hosts = corsConf.getStringList("hosts");
-                javalinConfig.plugins.enableCors(cors -> {
-                    cors.add(it -> {
-                        if (hosts.isEmpty())
-                            it.anyHost();
-                        else if (hosts.size() == 1)
-                            it.allowHost(hosts.get(0));
-                        else {
-                            it.allowHost(hosts.get(0), hosts.subList(1, hosts.size()).toArray(String[]::new));
-                        }
-                        it.allowCredentials = corsConf.getBoolean("allowCredentials");
-                        for (String header : corsConf.getStringList("exposedHeaders"))
-                            it.exposeHeader(header);
-                    });
+                event.wsHandlerAdded(info -> {
+                    RouteInfo routeInfo = RouteInfo.of(info);
+                    routeMap.computeIfAbsent(routeInfo.getGroup(), s -> new ArrayList<>()).add(routeInfo);
                 });
-            }
+            });
+            configureGungnir(javalinConfig);
 
-            // any other defined config
-            this.configureServer().accept(javalinConfig, serverConfig);
+            // any other user defined config
+            this.onConfigure().accept(javalinConfig);
 
             // register services
             registerServices(new ServiceRegistrar(this));
@@ -171,6 +119,124 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
 
     protected Gungnir() {
         this(loadConfig(loadProfiles()));
+    }
+
+    /**
+     * Configure features of gungnir
+     * @param javalinConfig configuration object for Javalin
+     */
+    protected void configureGungnir(JavalinConfig javalinConfig) {
+        // setup json
+        JsonMapper jsonMapper = jsonMapper();
+        if (Objects.nonNull(jsonMapper))
+            javalinConfig.jsonMapper(jsonMapper);
+
+        // setup session handler
+        SessionHandler sessionHandler = sessionHandler();
+        if (Objects.nonNull(sessionHandler))
+            javalinConfig.jetty.sessionHandler(() -> sessionHandler);
+
+        // setup access manager
+        AccessManager accessManager = accessManager();
+        if (Objects.nonNull(accessManager))
+            javalinConfig.accessManager(accessManager);
+
+        // define error handlers
+        ErrorHandling errorHandling = new ErrorHandling();
+        errorHandling
+                .add(Exception.class, (e, ctx) -> {
+                    ErrorResponse errorResponse = ErrorResponse.of(e);
+                    log.error("", e);
+                    ctx.status(errorResponse.getStatus()).json(errorResponse);
+                })
+                .add(HttpStatus.NOT_FOUND.getCode(), ctx -> {
+                    log.error("{}: {}", ctx.status(), ctx.path());
+                    ctx.status(HttpStatus.NOT_FOUND.getCode())
+                            .json(ErrorResponse.of(new NotFoundResponse()).withDetail("path", ctx.path()));
+                });
+        errorHandling(errorHandling);
+        errorHandling.getExceptionHandlers().forEach(this::exception);
+        errorHandling.getErrorHandlers().forEach(this::error);
+
+        // register view/template renderer
+        ViewRenderer viewRenderer = viewRenderer();
+        if (Objects.nonNull(viewRenderer))
+            JavalinRenderer.register(viewRenderer.getRenderer(), viewRenderer.extensions());
+
+        configureStaticFiles(javalinConfig);
+        configureSpa(javalinConfig);
+        configureCors(javalinConfig);
+    }
+
+    /**
+     * Define configuration for static file handler
+     * @param javalinConfig configuration object for Javalin
+     */
+    protected void configureStaticFiles(JavalinConfig javalinConfig) {
+        Config staticFilesConfig = config.getConfig("staticFiles");
+        if (staticFilesConfig.getBoolean("enabled")) {
+            if (staticFilesConfig.getBoolean("enableWebjars")) {
+                javalinConfig.staticFiles.enableWebjars();
+            }
+            javalinConfig.staticFiles.add(staticFiles -> {
+                staticFiles.hostedPath = staticFilesConfig.getString("hosted");
+                staticFiles.directory = staticFilesConfig.getString("directory");
+                staticFiles.location = staticFilesConfig.getString("location") .equals("classpath")
+                        ? Location.CLASSPATH
+                        : Location.EXTERNAL;
+                staticFiles.precompress = staticFilesConfig.getBoolean("precompress");
+                Config headers = staticFilesConfig.getConfig("headers");
+                staticFiles.headers = headers.root().keySet().stream()
+                        .collect(Collectors.toMap(it -> it, headers::getString));
+                Set<String> skipFiles = new HashSet<>(staticFilesConfig.getStringList("skipFiles"));
+                if (!skipFiles.isEmpty()) {
+                    staticFiles.skipFileFunction = req -> {
+                        String uri = req.getRequestURI();
+                        if (uri.contains("/")) {
+                            return uri.length() != 1 && skipFiles.contains(uri.substring(uri.lastIndexOf('/')));
+                        } else {
+                            return skipFiles.contains(uri);
+                        }
+                    };
+                }
+            });
+        }
+    }
+
+    /**
+     * Define configuration for spa root config
+     * @param javalinConfig configuration object for Javalin
+     */
+    protected void configureSpa(JavalinConfig javalinConfig) {
+        Config spaConfig = config.getConfig("spa");
+        Map<String, String> spaMap = spaConfig.root().keySet().stream()
+                .collect(Collectors.toMap(it -> it, spaConfig::getString));
+        spaMap.forEach(javalinConfig.spaRoot::addFile);
+    }
+
+    /**
+     * Define configuration for CORS handler
+     * @param javalinConfig configuration object for Javalin
+     */
+    protected void configureCors(JavalinConfig javalinConfig) {
+        Config corsConf = config.getConfig("cors");
+        if (corsConf.getBoolean("enabled")) {
+            List<String> hosts = corsConf.getStringList("hosts");
+            javalinConfig.plugins.enableCors(cors -> {
+                cors.add(it -> {
+                    if (hosts.isEmpty())
+                        it.anyHost();
+                    else if (hosts.size() == 1)
+                        it.allowHost(hosts.get(0));
+                    else {
+                        it.allowHost(hosts.get(0), hosts.subList(1, hosts.size()).toArray(String[]::new));
+                    }
+                    it.allowCredentials = corsConf.getBoolean("allowCredentials");
+                    for (String header : corsConf.getStringList("exposedHeaders"))
+                        it.exposeHeader(header);
+                });
+            });
+        }
     }
 
     /**
@@ -263,6 +329,14 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
             protected void registerServices(ServiceRegistrar registrar) {
                 gungnir.registerServices(registrar);
             }
+            @Override
+            protected void configureStaticFiles(JavalinConfig javalinConfig) {
+                gungnir.configureCors(javalinConfig);
+            }
+            @Override
+            protected void configureCors(JavalinConfig javalinConfig) {
+                gungnir.configureCors(javalinConfig);
+            }
         }.start();
     }
 
@@ -301,11 +375,11 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
     }
 
     /**
-     * Configure the http server using config properties
+     * Additional configuration to the server
      * @return The configuration consumer
      */
-    public BiConsumer<JavalinConfig, Config> configureServer() {
-        return (javalin, properties) -> {};
+    public Consumer<JavalinConfig> onConfigure() {
+        return javalin -> {};
     }
 
     /**

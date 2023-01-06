@@ -1,6 +1,7 @@
 package io.oreto.gungnir.route;
 
 import io.javalin.event.HandlerMetaInfo;
+import io.javalin.event.WsHandlerMetaInfo;
 import io.javalin.security.RouteRole;
 
 import java.util.Objects;
@@ -19,6 +20,10 @@ public class RouteInfo {
         return new RouteInfo(metaInfo);
     }
 
+    public static RouteInfo of(WsHandlerMetaInfo metaInfo) {
+        return new RouteInfo(metaInfo);
+    }
+
     private final String group;
 
     private final String method;
@@ -28,6 +33,13 @@ public class RouteInfo {
     protected RouteInfo(HandlerMetaInfo metaInfo) {
         this.group = metaInfo.getHandler().getClass().getName().split("\\$\\$")[0];
         this.method = metaInfo.getHttpMethod().name();
+        this.path = metaInfo.getPath();
+        this.roles = metaInfo.getRoles().stream().map(RouteRole::toString).collect(Collectors.toSet());
+    }
+
+    protected RouteInfo(WsHandlerMetaInfo metaInfo) {
+        this.group = metaInfo.getHandler().getClass().getName().split("\\$\\$")[0];
+        this.method = "WS";
         this.path = metaInfo.getPath();
         this.roles = metaInfo.getRoles().stream().map(RouteRole::toString).collect(Collectors.toSet());
     }

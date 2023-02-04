@@ -2,7 +2,7 @@
 In Norse mythology, Gungnir is the spear of the god Odin.
 
 ### benefits
-- Gungnir extends Javalin providing more power and functionality for quickly bootstrapping an application. 
+- Gungnir extends Javalin providing more power and functionality to quickly bootstrap an application
 - Service classes provide encapsulated routing rules and related logic
 - Provides fluent route handlers supporting multiple filter chaining including a powerful context predicate builder
 - Easy content negotiation built in

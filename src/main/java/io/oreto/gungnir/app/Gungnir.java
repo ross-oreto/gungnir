@@ -79,6 +79,7 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
         this.profiles = loadProfiles();
         this.config = config;
         this.log = LoggerFactory.getLogger(Gungnir.class);
+        log.info("profiles: {}", String.join(", ", this.profiles));
         this.routeMap = new LinkedHashMap<>();
 
         // log config files loaded

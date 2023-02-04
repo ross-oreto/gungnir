@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.oreto.gungnir</groupId>
+    <groupId>io.github.ross-oreto.gungnir</groupId>
     <artifactId>gungnir</artifactId>
     <version>1.0</version>
 
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>5.3.0</version>
+            <version>5.3.2</version>
         </dependency>
 
         <!-- config -->
@@ -85,58 +85,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <configuration>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>module-info.class</exclude>
-                                <exclude>META-INF/versions/**</exclude>
-                                <exclude>META-INF/LICENSE*</exclude>
-                                <exclude>META-INF/NOTICE*</exclude>
-                                <exclude>META-INF/DEPENDENCIES*</exclude>
-                                <exclude>META-INF/MANIFEST.MF</exclude>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.eclipse.jetty:jetty-annotations</artifact>
-                            <excludes><exclude>META-INF/services/org.eclipse.jetty.webapp.Configuration</exclude></excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.eclipse.jetty:jetty-plus</artifact>
-                            <excludes><exclude>META-INF/services/org.eclipse.jetty.webapp.Configuration</exclude></excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.eclipse.jetty.websocket:websocket-jetty-server</artifact>
-                            <excludes><exclude>META-INF/services/org.eclipse.jetty.webapp.Configuration</exclude></excludes>
-                        </filter>
-                    </filters>
-
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.properties.PropertiesTransformer">
-                            <resource>org/eclipse/jetty/http/encoding.properties</resource>
-                            <ordinalKey>ordinal</ordinalKey>
-                        </transformer>
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

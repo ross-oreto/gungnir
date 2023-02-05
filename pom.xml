@@ -6,7 +6,7 @@
 
     <groupId>io.github.ross-oreto.gungnir</groupId>
     <artifactId>gungnir</artifactId>
-    <version>1.0</version>
+    <version>1.0.0</version>
 
     <name>gungnir</name>
     <description>Gungnir extends Javalin providing more power and functionality to quickly bootstrap an application</description>

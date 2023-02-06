@@ -90,6 +90,7 @@ public class Gungnir extends Javalin implements IEnvironment, Configurable, Cont
         JavalinConfig.applyUserConfig(this, this.cfg, javalinConfig -> {
             // basic routing settings
             Config serverConfig = config.getConfig("server");
+            javalinConfig.showJavalinBanner = serverConfig.getBoolean("showJavalinBanner");
             javalinConfig.routing.contextPath = serverConfig.getString("contextPath");
             javalinConfig.routing.ignoreTrailingSlashes = serverConfig.getBoolean("ignoreTrailingSlashes");
             javalinConfig.routing.treatMultipleSlashesAsSingleSlash = serverConfig.getBoolean("ignoreMultipleSlashes");
